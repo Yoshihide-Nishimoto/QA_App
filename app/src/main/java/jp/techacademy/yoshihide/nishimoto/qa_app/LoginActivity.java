@@ -210,21 +210,17 @@ public class LoginActivity extends AppCompatActivity {
 
     private void saveName(String name,String uid,HashMap map) {
         // Preferenceに保存する
-        SharedPreferences sp =getSharedPreferences("favoritelist", Context.MODE_PRIVATE);
+        SharedPreferences sp =getSharedPreferences("favoritelist", MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
         editor.putString(Const.NameKEY, name);
         if (!uid.equals("")) {
             editor.putString("uid", uid);
         }
-        HashSet<String> stringHashSet = new HashSet<String>();
         if (map!=null){
             for (Object key : map.keySet()) {
-                stringHashSet.add(String.valueOf(key));
-                Log.d("favorite",String.valueOf(key));
-                Log.d("stringHashSet",String.valueOf(stringHashSet));
+                editor.putString(String.valueOf(key),"true");
             }
         }
-        editor.putStringSet("favoritelist", stringHashSet);
         editor.commit();
     }
 }

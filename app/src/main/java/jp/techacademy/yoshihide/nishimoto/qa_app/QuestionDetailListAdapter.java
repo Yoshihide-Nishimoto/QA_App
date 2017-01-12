@@ -1,22 +1,16 @@
 package jp.techacademy.yoshihide.nishimoto.qa_app;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.content.SharedPreferences;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -26,6 +20,8 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class QuestionDetailListAdapter extends BaseAdapter {
 
@@ -38,12 +34,13 @@ public class QuestionDetailListAdapter extends BaseAdapter {
     private ImageView mfavorite;
     private Boolean mfavorite_flg=false;
 
-    ProgressDialog mProgress;
     private int mGenre;
     private String uid;
     DatabaseReference mDataBaseReference;
     private DatabaseReference mData;
     private DatabaseReference mUserData;
+
+    private SharedPreferences sp;
 
     private ChildEventListener mEventListener = new ChildEventListener() {
         @Override
@@ -86,10 +83,10 @@ public class QuestionDetailListAdapter extends BaseAdapter {
 
     public QuestionDetailListAdapter(Context context, Question question,int genre,String uid) {
         mLayoutInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.sp = context.getSharedPreferences("favoritelist",MODE_PRIVATE);
         mQustion = question;
         mGenre = genre;
         this.uid = uid;
-        Log.d("Android",String.valueOf(mQustion.getQuestionUid()));
     }
 
     @Override
@@ -128,6 +125,7 @@ public class QuestionDetailListAdapter extends BaseAdapter {
             if (convertView == null) {
                 convertView = mLayoutInflater.inflate(R.layout.list_question_detail, parent, false);
             }
+
             String body = mQustion.getBody();
             String name = mQustion.getName();
 
@@ -157,15 +155,20 @@ public class QuestionDetailListAdapter extends BaseAdapter {
                 @Override
                 public void onClick(View v) {
 
+                    SharedPreferences.Editor editor = sp.edit();
+
                     Map<String, Object> favorite = new HashMap<>();
                     if (mfavorite_flg) {
                         mUserData.child(Const.FavoritePATH).child(mQustion.getQuestionUid()).removeValue();
                         mfavorite.setImageResource(R.drawable.favorite_off);
+                        editor.putString(mQustion.getQuestionUid(), "false");
                     } else {
-                        favorite.put(mQustion.getQuestionUid(), "");
+                        favorite.put(mQustion.getQuestionUid(), "true");
                         mUserData.child(Const.FavoritePATH).updateChildren(favorite);
                         mfavorite.setImageResource(R.drawable.favorite_on);
+                        editor.putString(mQustion.getQuestionUid(), "true");
                     }
+                    editor.commit();
 
                 }
             });
