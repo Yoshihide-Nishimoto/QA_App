@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
     private QuestionsListAdapter mAdapter;
 
     private SharedPreferences sp;
-    private Set<String> favoritelist;
 
     private String uid;
 
@@ -139,6 +138,44 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
+            sp = getSharedPreferences("favoritelist", MODE_PRIVATE);
+
+            if (String.valueOf(sp.getString(dataSnapshot.getKey(),"")).equals("true")) {
+
+                HashMap map = (HashMap) dataSnapshot.getValue();
+                String title = (String) map.get("title");
+                String body = (String) map.get("body");
+                String name = (String) map.get("name");
+                String uid = (String) map.get("uid");
+                String imageString = (String) map.get("image");
+                Bitmap image = null;
+                byte[] bytes;
+                if (imageString != null) {
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    bytes = Base64.decode(imageString, Base64.DEFAULT);
+                } else {
+                    bytes = new byte[0];
+                }
+
+                ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
+                HashMap answerMap = (HashMap) map.get("answers");
+                if (answerMap != null) {
+                    for (Object key : answerMap.keySet()) {
+                        HashMap temp = (HashMap) answerMap.get((String) key);
+                        String answerBody = (String) temp.get("body");
+                        String answerName = (String) temp.get("name");
+                        String answerUid = (String) temp.get("uid");
+                        Answer answer = new Answer(answerBody, answerName, answerUid, (String) key);
+                        answerArrayList.add(answer);
+                    }
+                }
+
+                Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
+                mQuestionArrayList.add(question);
+                mAdapter.notifyDataSetChanged();
+
+            }
+
         }
 
         @Override
@@ -202,11 +239,6 @@ public class MainActivity extends AppCompatActivity {
 
         Set defvalue = new HashSet();
 
-        sp = getSharedPreferences("favoritelist", MODE_PRIVATE);
-        favoritelist = sp.getStringSet("favoritelist",defvalue);
-
-        Log.d("favorite",String.valueOf(favoritelist));
-
 
         // ナビゲーションドロワーの設定
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -234,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
                     mGenre = 4;
                 } else if (id == R.id.nav_favorite) {
                     mToolbar.setTitle("お気に入り");
-                    mGenre = 5;
+                    mGenre = 0;
                 }
 
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -246,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                 mAdapter.setQuestionArrayList(mQuestionArrayList);
                 mListView.setAdapter(mAdapter);
 
-                if (mGenre != 5) {
+                if (mGenre != 0) {
 
                     // 選択したジャンルにリスナーを登録する
                     if (mGenreRef != null) {
@@ -262,8 +294,29 @@ public class MainActivity extends AppCompatActivity {
                         mGenre1Ref.removeEventListener(mEventListener2);
                     }
 
-                    mGenre1Ref = mDatabaseReference.child(Const.ContentsPATH);
+                    if (mGenre2Ref != null) {
+                        mGenre2Ref.removeEventListener(mEventListener2);
+                    }
+
+                    if (mGenre3Ref != null) {
+                        mGenre3Ref.removeEventListener(mEventListener2);
+                    }
+
+                    if (mGenre4Ref != null) {
+                        mGenre4Ref.removeEventListener(mEventListener2);
+                    }
+
+                    mGenre1Ref = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(1));
                     mGenre1Ref.addChildEventListener(mEventListener2);
+
+                    mGenre2Ref = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(2));
+                    mGenre2Ref.addChildEventListener(mEventListener2);
+
+                    mGenre3Ref = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(3));
+                    mGenre3Ref.addChildEventListener(mEventListener2);
+
+                    mGenre4Ref = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(4));
+                    mGenre4Ref.addChildEventListener(mEventListener2);
 
                 }
 
